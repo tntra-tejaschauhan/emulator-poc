@@ -31,6 +31,11 @@ ASCII version:
   Client --status/results--> [API]
 ```
 
+Rendered version with official logos (self-contained, works offline:
+[HTML](docs/architecture.html) · [dark PNG](docs/architecture-dark.png)):
+
+![architecture diagram with official logos](docs/architecture.png)
+
 ## What AWS Emulator is
 
 AWS Emulator is AWS's own local emulator of the AWS APIs: one command,
@@ -312,6 +317,7 @@ Design decisions:
 ├── frontend/                  # React + Vite UI (upload/list/results/download/delete)
 │   ├── src/App.jsx          # the whole UI in one component
 │   └── .env.example         # VITE_API_BASE override
+├── docs/                      # rendered architecture diagram (HTML + light/dark PNG)
 ├── Dockerfile
 ├── docker-compose.yml       # api + worker, host networking (Linux)
 ├── Makefile
