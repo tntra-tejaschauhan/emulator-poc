@@ -252,6 +252,26 @@ if the emulator is unreachable or the account is not `000000000000`.
 | GET | `/files/{id}/download` | Stream the original bytes back from S3 | 200 file | 404 unknown id/object |
 | DELETE | `/files/{id}` | Delete the S3 object and DynamoDB item | 204 empty | 404 unknown id |
 
+## Data model
+
+DynamoDB table (`TABLE_NAME`, on-demand billing): partition key **`file_id`
+(String)**, no sort key. DynamoDB is schemaless — these are the attributes the
+app writes:
+
+| Attribute | Type | Written by | When |
+|---|---|---|---|
+| `file_id` | S (key) | API | upload |
+| `filename`, `content_type`, `s3_key` | S | API | upload |
+| `size_bytes` | N | API | upload |
+| `status` | S | API, worker | `PENDING` → `PROCESSED` / `FAILED` |
+| `created_at` | S | API | upload |
+| `line_count`, `word_count` | N | worker | processed |
+| `sha256`, `processed_at` | S | worker | processed |
+| `error`, `failed_at` | S | worker | only if failed |
+
+S3 objects live at `uploads/{file_id}/{filename}`; SQS messages are
+`{"file_id": "<id>"}`.
+
 ## Configuration
 
 | Variable | Default | Purpose |
