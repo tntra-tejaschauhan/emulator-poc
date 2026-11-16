@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+# Virtualenv
+.venv/
+venv/
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+# Project runtime (emulator log, PID files, local state)
+.run/
+# Local env overrides (never commit secrets)
+.env
+# OS / editors
+.DS_Store
+*.swp
+*~
+.vscode/
+.idea/
+# Build artifacts
+dist/
+build/
