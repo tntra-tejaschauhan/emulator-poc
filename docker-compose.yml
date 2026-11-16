@@ -1,0 +1,59 @@
+# Linux only: relies on host networking to reach the emulator on 127.0.0.1:9297.
+# The emulator must already run on the HOST (make start-emulator) and the
+# resources must exist (source scripts/env.sh && make bootstrap).
+name: emulator-file-pipeline-poc
+
+services:
+  api:
+    build: .
+    image: emulator-file-pipeline-poc:latest
+    network_mode: host
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      # This run's endpoint config, credentials and CA cert (read-only).
+      - type: bind
+        source: ${HOME}/.aws/emulator/9297
+        target: /emulator
+        read_only: true
+    environment:
+      AWS_ENDPOINT_URL: https://127.0.0.1:9297
+      AWS_SHARED_CREDENTIALS_FILE: /emulator/emulator_credentials
+      AWS_CONFIG_FILE: /emulator/config
+      AWS_CA_BUNDLE: /emulator/ca.pem
+      AWS_EC2_METADATA_DISABLED: "true"
+      AWS_DISABLE_HOST_PREFIX_INJECTION: "true"
+      AWS_REGION: us-east-1
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_PAGER: ""
+      BUCKET_NAME: ${BUCKET_NAME:-poc-files}
+      TABLE_NAME: ${TABLE_NAME:-poc-files}
+      QUEUE_NAME: ${QUEUE_NAME:-poc-file-jobs}
+      ALLOW_REAL_AWS: ${ALLOW_REAL_AWS:-0}
+      API_PORT: ${API_PORT:-8000}
+    command: ["python", "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000"]
+
+  worker:
+    build: .
+    image: emulator-file-pipeline-poc:latest
+    network_mode: host
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      - type: bind
+        source: ${HOME}/.aws/emulator/9297
+        target: /emulator
+        read_only: true
+    environment:
+      AWS_ENDPOINT_URL: https://127.0.0.1:9297
+      AWS_SHARED_CREDENTIALS_FILE: /emulator/emulator_credentials
+      AWS_CONFIG_FILE: /emulator/config
+      AWS_CA_BUNDLE: /emulator/ca.pem
+      AWS_EC2_METADATA_DISABLED: "true"
+      AWS_DISABLE_HOST_PREFIX_INJECTION: "true"
+      AWS_REGION: us-east-1
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_PAGER: ""
+      BUCKET_NAME: ${BUCKET_NAME:-poc-files}
+      TABLE_NAME: ${TABLE_NAME:-poc-files}
+      QUEUE_NAME: ${QUEUE_NAME:-poc-file-jobs}
+      ALLOW_REAL_AWS: ${ALLOW_REAL_AWS:-0}
+    command: ["python", "-m", "app.worker"]
