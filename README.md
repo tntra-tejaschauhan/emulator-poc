@@ -309,6 +309,9 @@ Design decisions:
 │   ├── test_processing.py   # pure-function unit tests
 │   ├── test_guard.py        # account guard (mocked STS)
 │   └── test_integration.py  # live-emulator flow, locality proof, cleanup
+├── frontend/                  # React + Vite UI (upload/list/results/download/delete)
+│   ├── src/App.jsx          # the whole UI in one component
+│   └── .env.example         # VITE_API_BASE override
 ├── Dockerfile
 ├── docker-compose.yml       # api + worker, host networking (Linux)
 ├── Makefile
@@ -344,6 +347,33 @@ Verified: image builds, both services start, `/health` reports account
 containerized worker. After every emulator restart, re-run `make bootstrap`
 (the mounted credentials are per-run and change).
 
+## Frontend (React)
+
+`frontend/` is a small React + Vite app over the same API: upload a file, watch
+the list flip `PENDING -> PROCESSED` (auto-refresh every 2.5 s), inspect
+results (size, lines, words, SHA-256), download the original bytes, or delete.
+The API serves CORS `*` for it (see `app/main.py`; restrict before any real
+deployment).
+
+```console
+$ make api                  # terminal 1 (with env.sh sourced)
+$ make worker               # terminal 2 (with env.sh sourced)
+$ make frontend-install     # once: npm install
+$ make frontend             # serves http://127.0.0.1:5173
+```
+
+Open [http://127.0.0.1:5173](http://127.0.0.1:5173) in a browser. If the banner
+says the API is unreachable, the page recovers on its own once `make api` is
+up. To point the UI at another API, copy `frontend/.env.example` to
+`frontend/.env` and set `VITE_API_BASE`.
+
+Verified: `npm run build` succeeds, the dev server serves the app, the CORS
+preflight returns 200 with `access-control-allow-origin: *`, and the UI's
+exact call sequence (upload → list → detail → download → delete) was
+exercised with an `Origin: http://127.0.0.1:5173` header end to end. Rendering
+in a real browser was not verified here (no browser installed) — please
+confirm visually on first use.
+
 ## Troubleshooting
 
 | Symptom | Cause | Fix (all verified) |
@@ -357,6 +387,7 @@ containerized worker. After every emulator restart, re-run `make bootstrap`
 | `make check` says vars are not set | `env.sh` was run, not sourced, or new terminal | `source scripts/env.sh` in each terminal |
 | `The config profile (…) could not be found` | Stray `AWS_PROFILE` | Re-source `env.sh` (it unsets profile/credential vars) |
 | Demo stuck on `PENDING` | Worker not running / wrong queue env | Start `make worker` in a terminal with `env.sh` sourced; check its log |
+| React UI banner says API unreachable | `make api` not running (or wrong `VITE_API_BASE`) | Start `make api`; the page recovers by itself. Check `frontend/.env` override |
 
 ## Moving to real AWS
 

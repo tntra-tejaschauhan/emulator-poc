@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 
 import botocore.exceptions
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from .aws import check_emulator, get_client, guard_emulator_account
@@ -62,6 +63,16 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="emulator-file-pipeline-poc", lifespan=lifespan)
+
+# The React dev server (frontend/, :5173) calls this API cross-origin.
+# Wide open is deliberate for a local PoC; restrict allow_origins before any
+# real deployment.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")
