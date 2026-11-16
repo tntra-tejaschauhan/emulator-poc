@@ -1,5 +1,29 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Component, useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
+
+// Last resort: a render crash shows this message instead of a blank page.
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { error: null }
+  }
+  static getDerivedStateFromError(error) {
+    return { error }
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <main className="wrap">
+          <h1>File pipeline</h1>
+          <p className="banner bad">
+            Something went wrong: {String(this.state.error.message || this.state.error)}
+          </p>
+        </main>
+      )
+    }
+    return this.props.children
+  }
+}
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://127.0.0.1:8000'
 const MAX_UPLOAD_BYTES = 1024 * 1024
@@ -25,7 +49,7 @@ function formatBytes(n) {
   return `${(n / 1024).toFixed(1)} KiB`
 }
 
-export default function App() {
+function App() {
   const [health, setHealth] = useState(null)
   const [files, setFiles] = useState([])
   const [selectedId, setSelectedId] = useState(null)
@@ -56,7 +80,7 @@ export default function App() {
       try {
         setDetail(await api(`/files/${id}`))
       } catch (e) {
-        setDetail({ error: String(e) })
+        setDetail({ fetchError: String(e) })
       }
     },
     [],
@@ -188,25 +212,34 @@ export default function App() {
           <h2>Details</h2>
           {!detail ? (
             <p className="hint">Loading…</p>
-          ) : Detail.error ? (
-            <p className="banner bad">{Detail.error}</p>
+          ) : detail.fetchError ? (
+            <p className="banner bad">{detail.fetchError}</p>
           ) : (
             <dl className="detail">
-              <dt>File id</dt><dd className="mono">{Detail.file_id}</dd>
-              <dt>Status</dt><dd><StatusPill status={Detail.status} /></dd>
-              <dt>Size</dt><dd>{formatBytes(Detail.size_bytes)} ({Detail.size_bytes} bytes)</dd>
-              <dt>Lines</dt><dd>{Detail.line_count ?? '—'}</dd>
-              <dt>Words</dt><dd>{Detail.word_count ?? '—'}</dd>
-              <dt>SHA-256</dt><dd className="mono small">{Detail.sha256 ?? '—'}</dd>
-              <dt>Content type</dt><dd>{Detail.content_type}</dd>
-              <dt>S3 key</dt><dd className="mono small">{Detail.s3_key}</dd>
-              <dt>Created</dt><dd>{Detail.created_at}</dd>
-              {Detail.processed_at && (<><dt>Processed</dt><dd>{Detail.processed_at}</dd></>)}
-              {Detail.status === 'FAILED' && (<><dt>Error</dt><dd className="mono small">{Detail.error}</dd></>)}
+              <dt>File id</dt><dd className="mono">{detail.file_id}</dd>
+              <dt>Filename</dt><dd className="mono">{detail.filename}</dd>
+              <dt>Status</dt><dd><StatusPill status={detail.status} /></dd>
+              <dt>Size</dt><dd>{formatBytes(detail.size_bytes)} ({detail.size_bytes} bytes)</dd>
+              <dt>Lines</dt><dd>{detail.line_count ?? '—'}</dd>
+              <dt>Words</dt><dd>{detail.word_count ?? '—'}</dd>
+              <dt>SHA-256</dt><dd className="mono small">{detail.sha256 ?? '—'}</dd>
+              <dt>Content type</dt><dd>{detail.content_type}</dd>
+              <dt>S3 key</dt><dd className="mono small">{detail.s3_key}</dd>
+              <dt>Created</dt><dd>{detail.created_at}</dd>
+              {detail.processed_at && (<><dt>Processed</dt><dd>{detail.processed_at}</dd></>)}
+              {detail.status === 'FAILED' && (<><dt>Error</dt><dd className="mono small">{detail.error}</dd></>)}
             </dl>
           )}
         </section>
       )}
     </main>
+  )
+}
+
+export default function AppWithBoundary() {
+  return (
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   )
 }

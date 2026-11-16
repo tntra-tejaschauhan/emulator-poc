@@ -368,11 +368,11 @@ up. To point the UI at another API, copy `frontend/.env.example` to
 `frontend/.env` and set `VITE_API_BASE`.
 
 Verified: `npm run build` succeeds, the dev server serves the app, the CORS
-preflight returns 200 with `access-control-allow-origin: *`, and the UI's
-exact call sequence (upload → list → detail → download → delete) was
-exercised with an `Origin: http://127.0.0.1:5173` header end to end. Rendering
-in a real browser was not verified here (no browser installed) — please
-confirm visually on first use.
+preflight returns 200 with `access-control-allow-origin: *`, the UI's exact
+call sequence (upload → list → detail → download → delete) was exercised
+with an `Origin: http://127.0.0.1:5173` header end to end, and real
+Details/Upload clicks were driven in headless Chrome with no console errors.
+Component tests live in `frontend/src/App.test.jsx` (`make frontend-test`).
 
 ## Troubleshooting
 

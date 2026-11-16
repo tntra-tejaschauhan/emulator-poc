@@ -1,4 +1,4 @@
-.PHONY: help install-emulator start-emulator stop-emulator setup check bootstrap api worker test demo docker-up docker-down frontend frontend-install clean
+.PHONY: help install-emulator start-emulator stop-emulator setup check bootstrap api worker test demo docker-up docker-down frontend frontend-install frontend-test clean
 
 PY := .venv/bin/python
 PORT = $(or $(API_PORT),8000)
@@ -49,6 +49,9 @@ frontend-install: ## Install React frontend dependencies
 
 frontend: ## Run the React dev server on http://127.0.0.1:5173
 	npm --prefix frontend run dev -- --host 127.0.0.1 --port 5173
+
+frontend-test: ## Run the React component tests
+	npm --prefix frontend test
 
 clean: ## Remove venv, caches and run files (never emulator data)
 	rm -rf .venv .run __pycache__ app/__pycache__ tests/__pycache__ .pytest_cache
